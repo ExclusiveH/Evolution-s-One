@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suma Espacial - Microservicios</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px),
+                radial-gradient(rgba(255,255,255,.4), rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px;
+            background-position: 0 0, 40px 60px, 130px 270px, 70px 100px;
+            animation: backgroundMove 100s linear infinite;
+            font-family: 'Courier New', Courier, monospace;
+            color: white;
+        }
+
+        @keyframes backgroundMove {
+            from { background-position: 0 0, 40px 60px, 130px 270px, 70px 100px; }
+            to { background-position: 550px 550px, 390px 410px, 380px 520px, 220px 650px; }
+        }
+
+        .form-card {
+            border: 2px solid white;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 12px;
+            width: 380px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .field-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .field-group label {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .field-group input {
+            width: 100px;
+            padding: 8px;
+            text-align: center;
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+            font-family: inherit;
+            font-size: 1.1em;
+            outline: none;
+        }
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: bold;
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+            font-family: inherit;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: white;
+            color: black;
+        }
+
+        .url-box {
+            margin-bottom: 15px;
+            font-size: 0.8em;
+            word-break: break-all;
+            background: #111;
+            padding: 8px;
+            border: 1px dashed white;
+            color: #00ff66;
+        }
+
+        #sumaResult {
+            border: 2px solid white;
+            font-weight: bold;
+            color: #fff;
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-card">
+        <div class="field-group">
+            <label for="dato1">dato1</label>
+            <input type="number" id="dato1" value="5">
+        </div>
+
+        <div class="field-group">
+            <label for="dato2">dato2</label>
+            <input type="number" id="dato2" value="6">
+        </div>
+
+        <div class="btn-container">
+            <button onclick="ejecutarSuma('body')">1. Body Params (POST)</button>
+            <button onclick="ejecutarSuma('path')">2. Path Params (/5/6)</button>
+            <button onclick="ejecutarSuma('query')">3. Query Params (?d1=5&d2=6)</button>
+        </div>
+
+        <div class="url-box">
+            <strong>URL Ejecutada:</strong><br>
+            <span id="urlVisualizer">Esperando petición...</span>
+        </div>
+
+        <div class="field-group">
+            <label for="sumaResult">suma</label>
+            <input type="text" id="sumaResult" readonly placeholder="---">
+        </div>
+    </div>
+
+    <script>
+        // Cambiar por tu URL cuando lo despliegues en la nube (ej: Render/Vercel)
+        const BASE_URL_A = 'http://localhost:3001';
+
+        async function ejecutarSuma(tipo) {
+            const dato1 = parseFloat(document.getElementById('dato1').value);
+            const dato2 = parseFloat(document.getElementById('dato2').value);
+            const urlVisualizer = document.getElementById('urlVisualizer');
+            const sumaResult = document.getElementById('sumaResult');
+
+            if (isNaN(dato1) || isNaN(dato2)) {
+                alert("Por favor, ingrese números válidos.");
+                return;
+            }
+
+            let endpoint = '';
+            let config = {};
+
+            if (tipo === 'body') {
+                endpoint = `${BASE_URL_A}/sumar-body`;
+                config = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dato1, dato2 })
+                };
+            } else if (tipo === 'path') {
+                endpoint = `${BASE_URL_A}/sumar-path/${dato1}/${dato2}`;
+                config = { method: 'GET' };
+            } else if (tipo === 'query') {
+                endpoint = `${BASE_URL_A}/sumar-query?dato1=${dato1}&dato2=${dato2}`;
+                config = { method: 'GET' };
+            }
+
+            urlVisualizer.innerText = endpoint;
+
+            try {
+                const respuesta = await fetch(endpoint, config);
+                const data = await respuesta.json();
+
+                if (data.resultado !== undefined) {
+                    sumaResult.value = data.resultado;
+                } else {
+                    alert("Error en la respuesta del servidor");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("No se pudo conectar con el Microservicio A.");
+            }
+        }
+    </script>
+
+</body>
+</html>
